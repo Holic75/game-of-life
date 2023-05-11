@@ -3,6 +3,7 @@
 1. Cmake 3.8+
 2. C++17 compliant compiler
 3. boost::program_options 1.71+
+
 On Ubuntu 20.04+ can be installed by running
 ```
 sudo apt-get install libboost-options-dev
