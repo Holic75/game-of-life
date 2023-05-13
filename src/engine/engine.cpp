@@ -167,6 +167,7 @@ size_t Board::getNeighborsCount(size_t y, size_t x, CellState cell_state /* = Ce
 Engine::Engine(Board board, const Rules& rules /* = {} */) 
   : _board(std::move(board)), _rules(rules) {
   assert(_rules.isValid());
+  _board.shrink();
 }
 
 
