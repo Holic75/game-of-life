@@ -31,6 +31,7 @@ void Board::load(std::istream& is, CellEncoding cell_encoding /* = {} */) {
       _alive_cells_count_by_col[row_cell_count]++;
       row_cell_count++;
     } else if (c == cell_encoding.dead_cell) {
+      if (_alive_cells_count_by_col.size() <= row_cell_count) _alive_cells_count_by_col.push_back(0);
       _cells.back().push_back(CellState::DEAD);
       row_cell_count++;
     } else {
