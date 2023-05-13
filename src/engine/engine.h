@@ -1,10 +1,11 @@
 #pragma once
 
-#include <deque>
+#include <vector>
 #include <tuple>
 #include <ostream>
 #include <istream>
 #include <algorithm>
+#include <array>
 
 namespace game_of_life {
 
@@ -21,59 +22,50 @@ enum class CellState {
   DEAD
 };
 
-struct CellDescription {
-  size_t y;
-  size_t x;
-  CellState state;
+
+struct Rectangle {
+  size_t left;
+  size_t top;
+  size_t right;
+  size_t bottom;
+  size_t height() const { return bottom > top ? bottom - top : 0; }
+  size_t length() const { return right > left ? right - left : 0; }
 };
 
 
 /// @brief Class representing current state of the game of life.
 class Board {
 private:
-  std::deque<std::deque<CellState>> _cells;
-  std::deque<size_t> _alive_cells_count_by_row;
-  std::deque<size_t> _alive_cells_count_by_col;
+  std::vector<CellState> _cells;
+  std::vector<size_t> _alive_cells_count_by_row;
+  std::vector<size_t> _alive_cells_count_by_col;
 
 public:
+  /// @brief Construct zero-size board
   Board() {};
+  /// @brief Construct the board with the specified size. All the board cells will initially be set to CellState::DEAD
+  Board(size_t length, size_t height);
+  /// @brief Reset the size to height x length. All the cells will be set to CellState::DEAD
+  void reset(size_t length = 0, size_t height = 0);
   /// @brief Get state of the cell at row y and column x.
-  /// No boundary checks are performed on cell coordinates.
-  CellState getCellState(size_t y, size_t x) const { return _cells[y][x];};
+  CellState getCellState(int x, int y) const;
   /// @brief Get number of rows on the board
-  size_t height() const { return _cells.size(); }
+  size_t height() const { return _alive_cells_count_by_row.size(); }
   /// @brief Get number of columns on the board
-  size_t length() const { return _cells.size() == 0 ? 0 : _cells[0].size(); }
+  size_t length() const { return _alive_cells_count_by_col.size(); }
   /// @brief Read board from specified stream
   void load(std::istream& is, CellEncoding cell_encoding = {});
-  /// @brief Write board to specified stream
-  void save(std::ostream& os, CellEncoding cell_encoding = {}) const;
-  /// @brief  Remove all cells from the board setting its size to 0 x 0.
-  void clear();
-  /// @brief Reduce the size of the board to the minimum required to fit all living cells.
-  void shrink();
-  /// @brief Add row of dead cells to the top of the board.
-  void extendUp();
-  /// @brief Add row of dead cells to the bottom of the board.
-  void extendDown();
-  /// @brief Add column of dead cells to the left of the board.
-  void extendLeft();
-  /// @brief Add column of dead cells to the right of the board.
-  void extendRight();
+  /// @brief Write board area delimited by bounding_rect to specified stream. No boundary checks are performed
+  void save(std::ostream& os, const Rectangle& bounding_rect, CellEncoding cell_encoding = {}) const;
   /// @brief Replace cell state at position specified by cell_description with the state specified by cell_description. 
   /// No boundary checks are performed on cell coordinates.
-  void replaceCell(const CellDescription& cell_description);
-  /// @brief Replace states of the range of cells. 
-  /// No boundary checks are performed on cell coordinates.
-  /// If a cell with the same coordinates is listed more than once, its state will change to the state of the last entry.
-  /// @tparam It Forward Iterator dereferenceable to CellDescription.
-  template<class It>
-  void replaceCells(It begin, It end) { 
-    std::for_each(begin, end, [this](const CellDescription& c) { replaceCell(c); });
-  };
-  /// @brief Get number of neighbors of the cell with specified coordinates, that are the state equal to cell_state. 
-  /// No boundary checks are performed on cell coordinates.
-  size_t getNeighborsCount(size_t y, size_t x, CellState cell_state = CellState::ALIVE) const;
+  void setCellState(size_t x, size_t y, CellState state);
+  /// @brief Get number of alive neighbors of the cell with specified coordinates.
+  /// Note coodrinates can be outside of the board bounds. All the cells outside of the board bounds
+  /// are assumed to be dead
+  size_t getAliveNeighborsCount(int x, int y) const;
+  /// @brief Get rectangle coordinates, delimiting minimal board area necessary to fit all the living cells.
+  Rectangle getAliveCellsBoundingRectangle() const;
 };
 
 /// @brief Class summarizing rules of the game of life.
@@ -102,15 +94,15 @@ struct Rules {
 /// @brief Class running iterations of the game of life.
 class Engine {
 private:
-  Board _board;
+  std::array<Board, 2> _boards;
   Rules _rules;
-  std::vector<CellDescription> _cells_to_modify_buffer; // to reduce time spent on memory allocations
+  size_t _current_board_idx;
 public:
   /// @brief Construct from board describing initial state and rules.
   Engine(Board board, const Rules& rules = {});
-  /// @brief Return the board corresponding to the current state of the game. 
-  /// The board is shrinked to the minimum size required to fit all living cells.
-  const Board& board() { return _board; };
+  /// @brief Return the board corresponding to the current state of the game.
+  // The board size is undefined, but is guaranteed to fit all living cells
+  const Board& board() { return _boards[_current_board_idx]; };
   /// @brief Transition to the next state of the game.
   void next();
 };

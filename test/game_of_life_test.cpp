@@ -25,14 +25,25 @@ std::stringstream getStream(const std::string& s) {
 
 std::string convertBoardToString(const Board& board) {
   std::stringstream ss;
-  board.save(ss);
+  board.save(ss, board.getAliveCellsBoundingRectangle());
   return ss.str();
 }
+
 
 TEST(Board, create) {
   Board board;
   ASSERT_EQ(board.length(), 0);
   ASSERT_EQ(board.height(), 0);
+
+  Board board2(2, 3);
+  ASSERT_EQ(board2.length(), 2);
+  ASSERT_EQ(board2.height(), 3);
+  ASSERT_EQ(board2.getCellState(0, 0), CellState::DEAD);
+  ASSERT_EQ(board2.getCellState(1, 0), CellState::DEAD);
+  ASSERT_EQ(board2.getCellState(0, 1), CellState::DEAD);
+  ASSERT_EQ(board2.getCellState(1, 1), CellState::DEAD);
+  ASSERT_EQ(board2.getCellState(0, 2), CellState::DEAD);
+  ASSERT_EQ(board2.getCellState(1, 2), CellState::DEAD);
 }
 
 
@@ -58,13 +69,13 @@ TEST(Board, load) {
   ASSERT_EQ(board.length(), 3);
   ASSERT_EQ(board.height(), 3);
   ASSERT_EQ(board.getCellState(0, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(0, 1), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(0, 2), CellState::DEAD);
   ASSERT_EQ(board.getCellState(1, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 1), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 2), CellState::DEAD);
   ASSERT_EQ(board.getCellState(2, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 1), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(0, 1), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(1, 1), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(2, 2), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(0, 2), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(1, 2), CellState::DEAD);
   ASSERT_EQ(board.getCellState(2, 2), CellState::DEAD);
 
   ss = getStream(BOARD_ALIVE);
@@ -72,25 +83,25 @@ TEST(Board, load) {
   ASSERT_EQ(board.length(), 4);
   ASSERT_EQ(board.height(), 3);
   ASSERT_EQ(board.getCellState(0, 0), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(0, 1), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(0, 2), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(0, 3), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 0), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(1, 0), CellState::ALIVE);
+  ASSERT_EQ(board.getCellState(2, 0), CellState::ALIVE);
+  ASSERT_EQ(board.getCellState(3, 0), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(0, 1), CellState::DEAD);
   ASSERT_EQ(board.getCellState(1, 1), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(1, 2), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 3), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 0), CellState::DEAD);
   ASSERT_EQ(board.getCellState(2, 1), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(3, 1), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(0, 2), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(1, 2), CellState::DEAD);
   ASSERT_EQ(board.getCellState(2, 2), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 3), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(3, 2), CellState::DEAD);
 
   ss = getStream(BOARD_NO_LAST_SEPATOR);
   board.load(ss);
   ASSERT_EQ(board.length(), 1);
   ASSERT_EQ(board.height(), 3);
   ASSERT_EQ(board.getCellState(0, 0), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(1, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 0), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(0, 1), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(0, 2), CellState::DEAD);
 }
 
 
@@ -105,180 +116,45 @@ TEST(Board, load_throw_exception) {
 }
 
 
-TEST(Board, extendUp) {
-  Board board;
-  board.extendUp();
-  ASSERT_EQ(board.length(), 0);
-  ASSERT_EQ(board.height(), 0);
-
-  std::stringstream ss = getStream(BOARD_ALIVE);
-  board.load(ss);
-  board.extendUp();
-  ASSERT_EQ(board.length(), 4);
-  ASSERT_EQ(board.height(), 4);
-  ASSERT_EQ(board.getCellState(0, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(0, 1), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(0, 2), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(0, 3), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 0), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(1, 1), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(1, 2), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(1, 3), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 1), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(2, 2), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 3), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(3, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(3, 1), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(3, 2), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(3, 3), CellState::DEAD);
-}
-
-
-TEST(Board, extendDown) {
-  Board board;
-  board.extendDown();
-  ASSERT_EQ(board.length(), 0);
-  ASSERT_EQ(board.height(), 0);
-
-  std::stringstream ss = getStream(BOARD_ALIVE);
-  board.load(ss);
-  board.extendDown();
-  ASSERT_EQ(board.length(), 4);
-  ASSERT_EQ(board.height(), 4);
-  ASSERT_EQ(board.getCellState(0, 0), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(0, 1), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(0, 2), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(0, 3), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 1), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(1, 2), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 3), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 1), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 2), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 3), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(3, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(3, 1), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(3, 2), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(3, 3), CellState::DEAD);
-}
-
-
-TEST(Board, extendLeft) {
-  Board board;
-  board.extendLeft();
-  ASSERT_EQ(board.length(), 0);
-  ASSERT_EQ(board.height(), 0);
-
-  std::stringstream ss = getStream(BOARD_ALIVE);
-  board.load(ss);
-  board.extendLeft();
-  ASSERT_EQ(board.length(), 5);
-  ASSERT_EQ(board.height(), 3);
-  ASSERT_EQ(board.getCellState(0, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(0, 2), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(0, 2), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(0, 3), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(0, 4), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 1), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 2), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(1, 3), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 4), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 1), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 2), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 3), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 4), CellState::DEAD);
-}
-
-TEST(Board, extendRight) {
-  Board board;
-  board.extendRight();
-  ASSERT_EQ(board.length(), 0);
-  ASSERT_EQ(board.height(), 0);
-
-  std::stringstream ss = getStream(BOARD_ALIVE);
-  board.load(ss);
-  board.extendRight();
-  ASSERT_EQ(board.length(), 5);
-  ASSERT_EQ(board.height(), 3);
-  ASSERT_EQ(board.getCellState(0, 0), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(0, 1), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(0, 2), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(0, 3), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(0, 4), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 1), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(1, 2), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 3), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 4), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 1), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 2), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 3), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 4), CellState::DEAD);
-}
-
-
-TEST(Board, replaceCell) {
+TEST(Board, setCellState) {
   Board board;
   std::stringstream ss = getStream(BOARD_ALIVE);
   board.load(ss);
 
-  board.replaceCell({0, 0, CellState::DEAD});
+  board.setCellState(0, 0, CellState::DEAD);
   ASSERT_EQ(board.getCellState(0, 0), CellState::DEAD);
 
-  board.replaceCell({2, 3, CellState::ALIVE});
-  ASSERT_EQ(board.getCellState(2, 3), CellState::ALIVE);
+  board.setCellState(3, 2, CellState::ALIVE);
+  ASSERT_EQ(board.getCellState(3, 2), CellState::ALIVE);
 }
 
 
-TEST(Board, replaceCells) {
-   Board board;
-  std::stringstream ss = getStream(BOARD_ALIVE);
-  board.load(ss);
-
-  std::vector<CellDescription> cell_descriptions = {
-    {0, 0, CellState::DEAD},
-    {2, 3, CellState::ALIVE}
-  };
-
-  board.replaceCells(cell_descriptions.begin(), cell_descriptions.end());
-  ASSERT_EQ(board.getCellState(0, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(2, 3), CellState::ALIVE);
-}
-
-
-TEST(Board, shrink) {
+TEST(Board, getAliveCellsBoundingRect) {
   Board board;
   std::stringstream ss = getStream(BOARD_EMPTY);
   board.load(ss);
-  ASSERT_EQ(board.length(), 0);
-  ASSERT_EQ(board.height(), 0);
+  auto rect = board.getAliveCellsBoundingRectangle();
+  ASSERT_EQ(rect.left, 0);
+  ASSERT_EQ(rect.right, 0);
+  ASSERT_EQ(rect.top, 0);
+  ASSERT_EQ(rect.bottom, 0);
 
-  board.shrink();
-  ASSERT_EQ(board.length(), 0);
-  ASSERT_EQ(board.height(), 0);
 
   ss = getStream(BOARD_DEAD);
   board.load(ss);
-  board.shrink();
-  ASSERT_EQ(board.length(), 0);
-  ASSERT_EQ(board.height(), 0);
+  rect = board.getAliveCellsBoundingRectangle();
+  ASSERT_EQ(rect.left, 0);
+  ASSERT_EQ(rect.right, 0);
+  ASSERT_EQ(rect.top, 0);
+  ASSERT_EQ(rect.bottom, 0);
 
   ss = getStream(BOARD_ALIVE);
   board.load(ss);
-  board.shrink();
-  ASSERT_EQ(board.length(), 3);
-  ASSERT_EQ(board.height(), 2);
-  ASSERT_EQ(board.getCellState(0, 0), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(0, 1), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(0, 2), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(1, 0), CellState::DEAD);
-  ASSERT_EQ(board.getCellState(1, 1), CellState::ALIVE);
-  ASSERT_EQ(board.getCellState(1, 2), CellState::DEAD);
+  rect = board.getAliveCellsBoundingRectangle();
+  ASSERT_EQ(rect.left, 0);
+  ASSERT_EQ(rect.right, 3);
+  ASSERT_EQ(rect.top, 0);
+  ASSERT_EQ(rect.bottom, 2);
 }
 
 
@@ -286,53 +162,64 @@ TEST(Board, save) {
   Board board;
   std::stringstream ss = getStream(BOARD_EMPTY);
   board.load(ss);
-  board.shrink();
 
   std::stringstream out_empty;
-  board.save(out_empty);
+  board.save(out_empty, board.getAliveCellsBoundingRectangle());
   ASSERT_EQ(out_empty.str(), BOARD_EMPTY);
 
   ss = getStream(BOARD_DEAD);
   board.load(ss);
   std::stringstream out_dead;
-  board.save(out_dead);
-  ASSERT_EQ(out_dead.str(), BOARD_DEAD);
+  board.save(out_dead, {0, 0, 3, 3});
 
   ss = getStream(BOARD_ALIVE);
   board.load(ss);
   std::stringstream out_alive;
-  board.save(out_alive);
-  ASSERT_EQ(out_alive.str(), BOARD_ALIVE);
+  board.save(out_alive, {1, 0, 3, 2});
+  ASSERT_EQ(out_alive.str(), "**\n*_\n");
 }
 
 
-TEST(Board, clear) {
+TEST(Board, reset) {
   Board board;
   std::stringstream ss = getStream(BOARD_ALIVE);
   board.load(ss);
 
-  board.clear();
+  board.reset();
   ASSERT_EQ(board.height(), 0);
   ASSERT_EQ(board.length(), 0);
+  board.reset(2, 3);
+  ASSERT_EQ(board.getCellState(0, 0), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(1, 0), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(0, 1), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(1, 1), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(0, 2), CellState::DEAD);
+  ASSERT_EQ(board.getCellState(1, 2), CellState::DEAD);
 }
 
 
-TEST(Board, getNeighborsCount) {
+TEST(Board, getAliveNeighborsCount) {
   Board board;
   std::stringstream ss = getStream(BOARD_ALIVE);
   board.load(ss);
 
-  ASSERT_EQ(board.getNeighborsCount(0, 0), 2);
-  ASSERT_EQ(board.getNeighborsCount(0, 1), 3);
-  ASSERT_EQ(board.getNeighborsCount(1, 1), 3);
-  ASSERT_EQ(board.getNeighborsCount(1, 2), 3);
-  ASSERT_EQ(board.getNeighborsCount(1, 3), 1);
-  ASSERT_EQ(board.getNeighborsCount(2, 0), 1);
-  ASSERT_EQ(board.getNeighborsCount(2, 1), 1);
-  ASSERT_EQ(board.getNeighborsCount(2, 3), 0);
+  ASSERT_EQ(board.getAliveNeighborsCount(0, 0), 2);
+  ASSERT_EQ(board.getAliveNeighborsCount(1, 0), 3);
+  ASSERT_EQ(board.getAliveNeighborsCount(2, 0), 2);
+  ASSERT_EQ(board.getAliveNeighborsCount(3, 0), 1);
+  ASSERT_EQ(board.getAliveNeighborsCount(0, 1), 3);
+  ASSERT_EQ(board.getAliveNeighborsCount(1, 1), 3);
+  ASSERT_EQ(board.getAliveNeighborsCount(2, 1), 3);
+  ASSERT_EQ(board.getAliveNeighborsCount(3, 1), 1);
+  ASSERT_EQ(board.getAliveNeighborsCount(0, 2), 1);
+  ASSERT_EQ(board.getAliveNeighborsCount(1, 2), 1);
+  ASSERT_EQ(board.getAliveNeighborsCount(2, 2), 1);
+  ASSERT_EQ(board.getAliveNeighborsCount(3, 2), 0);
 
-  ASSERT_EQ(board.getNeighborsCount(1, 1, CellState::DEAD), 5);
-  ASSERT_EQ(board.getNeighborsCount(2, 3, CellState::DEAD), 3);
+  // cells outside of the board
+  ASSERT_EQ(board.getAliveNeighborsCount(-1, -1), 1);
+  ASSERT_EQ(board.getAliveNeighborsCount(10, 10), 0);
+
 }
 
 
@@ -368,44 +255,32 @@ TEST(Engine, next) {
   // applying next to empty board does not change it
   Engine e1 = Engine(Board());
   e1.next();
-  ASSERT_EQ(e1.board().height(), 0);
-  ASSERT_EQ(e1.board().length(), 0);
+  ASSERT_EQ(convertBoardToString(e1.board()), "");
 
   Board board;
   std::stringstream ss = getStream(BOARD_DEAD);
   board.load(ss);
   Engine e2 = Engine(std::move(board));
   e2.next();
-  ASSERT_EQ(e2.board().height(), 0);
-  ASSERT_EQ(e2.board().length(), 0);
+  ASSERT_EQ(convertBoardToString(e2.board()), "");
 
   // test non empty board
   ss = getStream(BOARD_ALIVE);
   board.load(ss);
   Engine e3 = Engine(std::move(board));
   e3.next();
-  ASSERT_EQ(e3.board().height(), 3);
-  ASSERT_EQ(e3.board().length(), 3);
   ASSERT_EQ(convertBoardToString(e3.board()), "_*_\n***\n***\n");
 
   e3.next();
-  ASSERT_EQ(e3.board().height(), 4);
-  ASSERT_EQ(e3.board().length(), 3);
   ASSERT_EQ(convertBoardToString(e3.board()), "***\n___\n*_*\n_*_\n");
 
   e3.next();
-  ASSERT_EQ(e3.board().height(), 5);
-  ASSERT_EQ(e3.board().length(), 3);
   ASSERT_EQ(convertBoardToString(e3.board()), "_*_\n_*_\n*_*\n_*_\n_*_\n");
 
   e3.next();
-  ASSERT_EQ(e3.board().height(), 3);
-  ASSERT_EQ(e3.board().length(), 3);
   ASSERT_EQ(convertBoardToString(e3.board()), "***\n*_*\n***\n");
 
-  e3.next();
-  ASSERT_EQ(e3.board().height(), 5);
-  ASSERT_EQ(e3.board().length(), 5);
+  e3.next();const std::string BOARD_ALIVE = "***_\n_*__\n____\n";
   ASSERT_EQ(convertBoardToString(e3.board()), "__*__\n_*_*_\n*___*\n_*_*_\n__*__\n");
 }
 

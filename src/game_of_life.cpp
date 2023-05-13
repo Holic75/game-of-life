@@ -62,7 +62,8 @@ void runGame(game_of_life::Board board, const Options& opts) {
     if (it == opts.num_iterations || opts.all) {
       std::string output_filename = parent_path / (stem + "_" + std::to_string(it) + extension);
       std::ofstream output_file(output_filename, std::ios::out | std::ios::binary);
-      game_engine.board().save(output_file);
+      auto alive_cell_bounding_rect = game_engine.board().getAliveCellsBoundingRectangle();
+      game_engine.board().save(output_file, alive_cell_bounding_rect);
     }
   }
 }
