@@ -13,12 +13,12 @@ Board::Board(size_t length, size_t height) {
 
 void Board::reset(size_t length /* = 0 */, size_t height /* = 0 */) {
   assert(length < std::numeric_limits<int>::max() && height < std::numeric_limits<int>::max());
-  _cells.resize(height * length);
-  std::fill(_cells.begin(), _cells.end(), CellState::DEAD);
-  _alive_cells_count_by_row.resize(height);
-  std::fill(_alive_cells_count_by_row.begin(), _alive_cells_count_by_row.end(), 0);
-  _alive_cells_count_by_col.resize(length);
-  std::fill(_alive_cells_count_by_col.begin(), _alive_cells_count_by_col.end(), 0);
+  _cells.clear();
+  _alive_cells_count_by_row.clear();
+  _alive_cells_count_by_col.clear();
+  _cells.resize(height * length, CellState::DEAD);
+  _alive_cells_count_by_row.resize(height, 0);
+  _alive_cells_count_by_col.resize(length, 0);
 }
   
 void Board::load(std::istream& is, CellEncoding cell_encoding /* = {} */) {
