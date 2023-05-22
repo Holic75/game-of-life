@@ -3,20 +3,26 @@
 1. Cmake 3.8+
 2. C++17 compliant compiler
 3. boost::program_options 1.71+
+<dd> On Ubuntu 20.04+ can be installed by running </dd>
 
-On Ubuntu 20.04+ can be installed by running
 ```
 sudo apt-get install libboost-options-dev
 ```
-On Windows can be installed using vcpkg (https://vcpkg.io/en/)
+
+<dd> On Windows can be installed using vcpkg (https://vcpkg.io/en/) </dd>
+
 ```
 .\vcpkg install boost-program-options
 ```
 4. Optionally gtest for building unit tests
+<dd> On Ubuntu 20.04+ can be installed by running </dd>
+
 ```
-sudo apt install libgtest-dev
+sudo apt-get install libgtest-dev
 ```
-On Windows can be installed using vcpkg (https://vcpkg.io/en/)
+
+<dd> On Windows can be installed using vcpkg (https://vcpkg.io/en/) </dd>
+
 ```
 .\vcpkg install gtest
 ```
