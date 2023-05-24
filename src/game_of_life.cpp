@@ -2,7 +2,7 @@
 #include <boost/program_options.hpp>
 #include <filesystem>
 #include <fstream>
-#include "engine/engine.h"
+#include "core/engine.h"
 
 
 struct Options {
@@ -38,32 +38,36 @@ std::tuple<Options, bool> processOptions(int argc, char **argv) {
 };
 
 
-game_of_life::Board loadBoardFromFile(const std::string& input_filename) {
-  game_of_life::Board board;
+game_of_life::GameBoard loadBoardFromFile(const std::string& input_filename) {
+  game_of_life::GameBoard board;
   if (!std::filesystem::exists(input_filename) || std::filesystem::is_directory(input_filename)) {
     throw std::runtime_error(input_filename + " is not a valid path to an input file");
   }
   std::ifstream input_file(input_filename, std::ios::in | std::ios::binary);
-  board.load(input_file);
+  game_of_life::CellEncoding encoding;
+  auto decode = [&encoding] (char c) { return encoding.decode(c); };
+  board.load(input_file, decode);
   return board;
 }
 
 
-void runGame(game_of_life::Board board, const Options& opts) {
-  game_of_life::Engine game_engine(std::move(board));
+void runGame(game_of_life::GameBoard board, const Options& opts) {
+  game_of_life::Engine game_engine(std::move(board), game_of_life::GameRules());
 
   auto input_path = std::filesystem::path(opts.input_filename);
   auto parent_path = input_path.parent_path();
   std::string stem = input_path.stem();
   std::string extension = input_path.extension();
+  game_of_life::CellEncoding encoding;
+  auto encode = [&encoding] (game_of_life::CellState c) { return encoding.encode(c); };
 
   for (size_t it = 1; it <= opts.num_iterations; it++) {
     game_engine.next();
     if (it == opts.num_iterations || opts.all) {
       std::string output_filename = parent_path / (stem + "_" + std::to_string(it) + extension);
       std::ofstream output_file(output_filename, std::ios::out | std::ios::binary);
-      auto alive_cell_bounding_rect = game_engine.board().getAliveCellsBoundingRectangle();
-      game_engine.board().save(output_file, alive_cell_bounding_rect);
+      auto alive_cell_bounding_rect = game_engine.board().getOccupiedCellsBoundingRectangle();
+      game_engine.board().save(output_file, alive_cell_bounding_rect, encode);
     }
   }
 }
@@ -73,7 +77,7 @@ int main (int argc, char **argv) {
   auto [opts, is_ok] = processOptions(argc, argv);
   if (!is_ok) return 1;
 
-  game_of_life::Board board;
+  game_of_life::GameBoard board;
   try {
     board = loadBoardFromFile(opts.input_filename);
   } catch (const std::exception& e) {
