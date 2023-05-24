@@ -17,9 +17,12 @@ class CellEncoding {
   char _alive_cell;
   char _dead_cell;
 public:
-  /// @brief  Consturct by specifying characters to represent alive and dead cells.
+  /// @brief  Construct by specifying characters to represent alive and dead cells.
   CellEncoding(char alive_cell = '*', char dead_cell = '_');
-  char encode(CellState cell) const ;
+  /// @brief Encode cell state as a character
+  char encode(CellState cell) const;
+  /// @brief Decode character into a cell state.
+  /// Throws std::runtime_error if the character can not be decoded.
   CellState decode(char encoded_cell) const;
 };
 
@@ -31,7 +34,8 @@ class GameRules {
   size_t _min_neighbors_to_spawn = 3;
   size_t _max_neighbors_to_spawn = 3;
 public:
-  /// @brief Construct from inclusive bounds on number of neighboring living cells to survive and on number of living cells to spawn a new one
+  /// @brief Construct from inclusive bounds on number of neighboring living cells to survive and on number of living cells to spawn a new one.
+  /// Throws std::runtime_error if the rules are contradictory.
   GameRules(
     size_t min_neighbors_to_survive = 2, size_t max_neighbors_to_survive = 3, 
     size_t min_neighbors_to_spawn = 3, size_t max_neighbors_to_spawn = 3
